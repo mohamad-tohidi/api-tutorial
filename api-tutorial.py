@@ -1,19 +1,20 @@
 """
 Compare two RAG APIs and vote on the better answer.
 
-POST /ask      question -> two answers (ids 0 and 1)
-POST /vote     pick 0, 1, both or neither
-GET  /results  show the scores
+Live:        POST /ask      question -> two answers (ids 0 and 1)
+Precomputed: GET /question  next unvoted precomputed question
+Vote:        POST /vote     pick 0, 1, both or neither
+Results:     GET /results   show the scores
 
 The two RAG endpoints come from RAG_API_A_URL and RAG_API_B_URL.
-Records are saved as one JSON object per line in data.txt.
+Everything is stored in a SQLite database (arena.db).
 """
 
 import asyncio
 import json
 import os
 import random
-from pathlib import Path
+import sqlite3
 from typing import Literal
 
 import httpx
@@ -24,22 +25,39 @@ from pydantic import BaseModel
 PROJECT = "parsaqa"
 API_A = os.getenv("RAG_API_A_URL", "http://localhost:8001")
 API_B = os.getenv("RAG_API_B_URL", "http://localhost:8002")
-DATA_FILE = Path("data.txt")
+DB_FILE = os.getenv("DB_FILE", "arena.db")
 TIMEOUT = httpx.Timeout(300, connect=10)
 
 app = FastAPI()
 
 
-def read_records():
-    if not DATA_FILE.exists():
-        return []
-    lines = DATA_FILE.read_text(encoding="utf-8").splitlines()
-    return [json.loads(line) for line in lines if line.strip()]
+def connect_db():
+    connection = sqlite3.connect(DB_FILE)
+    connection.row_factory = sqlite3.Row
+    return connection
 
 
-def write_record(record):
-    with DATA_FILE.open("a", encoding="utf-8") as file:
-        file.write(json.dumps(record, ensure_ascii=False) + "\n")
+def setup_db():
+    connection = connect_db()
+    connection.executescript("""
+        CREATE TABLE IF NOT EXISTS rounds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT NOT NULL,
+            answer_a TEXT NOT NULL,
+            answer_b TEXT NOT NULL,
+            a_first INTEGER NOT NULL,
+            precomputed INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS votes (
+            round_id INTEGER PRIMARY KEY,
+            choice TEXT NOT NULL
+        );
+    """)
+    connection.commit()
+    connection.close()
+
+
+setup_db()
 
 
 async def ask_rag(client, api_url, question):
@@ -67,6 +85,30 @@ async def safe_ask(client, api_url, question):
         return f"[{api_url} error: {error}]"
 
 
+def save_round(question, answer_a, answer_b, precomputed):
+    a_first = random.random() < 0.5
+    connection = connect_db()
+    cursor = connection.execute(
+        "INSERT INTO rounds (question, answer_a, answer_b, a_first, precomputed) VALUES (?, ?, ?, ?, ?)",
+        (question, answer_a, answer_b, a_first, precomputed),
+    )
+    round_id = cursor.lastrowid
+    connection.commit()
+    connection.close()
+    return round_id, a_first
+
+
+def blind_answers(a_first, answer_a, answer_b):
+    if a_first:
+        ordered = [answer_a, answer_b]
+    else:
+        ordered = [answer_b, answer_a]
+    return [
+        {"id": 0, "text": ordered[0]},
+        {"id": 1, "text": ordered[1]},
+    ]
+
+
 class AskRequest(BaseModel):
     question: str
 
@@ -84,37 +126,51 @@ async def ask(payload: AskRequest):
             safe_ask(client, API_B, payload.question),
         )
 
-    # randomly put the two APIs in slot 0 and slot 1, so the vote is blind
-    labeled = [("api_a", answer_a), ("api_b", answer_b)]
-    random.shuffle(labeled)
-    labels = [name for name, _ in labeled]
-    answers = [text for _, text in labeled]
-
-    round_id = sum(1 for record in read_records() if record["type"] == "round")
-    write_record({
-        "type": "round",
-        "id": round_id,
-        "question": payload.question,
-        "labels": labels,
-        "answers": answers,
-    })
-
+    round_id, a_first = save_round(payload.question, answer_a, answer_b, precomputed=0)
     return {
         "id": round_id,
-        "answers": [
-            {"id": 0, "text": answers[0]},
-            {"id": 1, "text": answers[1]},
-        ],
+        "question": payload.question,
+        "answers": blind_answers(a_first, answer_a, answer_b),
+    }
+
+
+@app.get("/question")
+async def question():
+    connection = connect_db()
+    row = connection.execute("""
+        SELECT * FROM rounds
+        WHERE precomputed = 1
+          AND id NOT IN (SELECT round_id FROM votes)
+        ORDER BY RANDOM()
+        LIMIT 1
+    """).fetchone()
+    connection.close()
+
+    if row is None:
+        raise HTTPException(404, "no precomputed question left")
+
+    return {
+        "id": row["id"],
+        "question": row["question"],
+        "answers": blind_answers(row["a_first"], row["answer_a"], row["answer_b"]),
     }
 
 
 @app.post("/vote")
 async def vote(payload: VoteRequest):
-    for record in read_records():
-        if record["type"] == "round" and record["id"] == payload.id:
-            write_record({"type": "vote", "id": payload.id, "choice": payload.choice})
-            return {"ok": True}
-    raise HTTPException(404, "round not found")
+    connection = connect_db()
+    exists = connection.execute("SELECT 1 FROM rounds WHERE id = ?", (payload.id,)).fetchone()
+    if not exists:
+        connection.close()
+        raise HTTPException(404, "round not found")
+
+    connection.execute(
+        "INSERT OR REPLACE INTO votes (round_id, choice) VALUES (?, ?)",
+        (payload.id, payload.choice),
+    )
+    connection.commit()
+    connection.close()
+    return {"ok": True}
 
 
 def count_votes(rounds, votes):
@@ -146,16 +202,24 @@ def count_votes(rounds, votes):
 
 @app.get("/results")
 async def results():
+    connection = connect_db()
+    rows = connection.execute("""
+        SELECT rounds.id, rounds.a_first, votes.choice
+        FROM votes
+        JOIN rounds ON rounds.id = votes.round_id
+    """).fetchall()
+    total_rounds = connection.execute("SELECT COUNT(*) FROM rounds").fetchone()[0]
+    connection.close()
+
     rounds = {}
     votes = {}
-    for record in read_records():
-        if record["type"] == "round":
-            rounds[record["id"]] = record
-        elif record["type"] == "vote":
-            votes[record["id"]] = record["choice"]
+    for row in rows:
+        labels = ["api_a", "api_b"] if row["a_first"] else ["api_b", "api_a"]
+        rounds[row["id"]] = {"labels": labels}
+        votes[row["id"]] = row["choice"]
 
     return {
-        "rounds": len(rounds),
+        "rounds": total_rounds,
         "votes": len(votes),
         "score": count_votes(rounds, votes),
     }

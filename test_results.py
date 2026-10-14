@@ -1,6 +1,10 @@
 """Self-check for vote counting. Run: uv run test_results.py"""
 
+import os
 import runpy
+import tempfile
+
+os.environ["DB_FILE"] = tempfile.mkdtemp() + "/test.db"
 
 app = runpy.run_path("api-tutorial.py")
 count_votes = app["count_votes"]
