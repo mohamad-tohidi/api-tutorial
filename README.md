@@ -18,4 +18,20 @@ uv sync
 uv run api-tutorial.py
 ```
 
+## پلتفرم مقایسه دو RAG
+
+آدرس دو API را با env مشخص کن:
+
+```
+RAG_API_A_URL=http://host-a:8001 RAG_API_B_URL=http://host-b:8002 uv run api-tutorial.py
+```
+
+مراحل:
+
+1. `POST /ask` — `{"question": "..."}` → `{"id": 0, "answers": [{"id": 0, "text": "..."}, {"id": 1, "text": "..."}]}`
+2. `POST /vote` — `{"id": 0, "choice": "0"|"1"|"both"|"neither"}`
+3. `GET /results` — امتیاز هر API
+
+ترتیب دو API به‌صورت تصادفی (blind) انتخاب می‌شود و در `data.txt` ذخیره می‌شود.
+تست تجمیع رأی‌ها: `uv run test_results.py`
 و تمام
