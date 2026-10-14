@@ -1,0 +1,281 @@
+:root {
+  --paper: #fbfaf6;
+  --grid: #e4e2da;
+  --ink: #222;
+  --blue: #3b5bdb;
+  --highlight: #fff3a3;
+  --muted: #5f5d55;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.9;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 72px 24px 96px;
+}
+
+.masthead {
+  margin-bottom: 48px;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+.squiggle {
+  display: block;
+  width: 120px;
+  height: 12px;
+  margin: 8px 0 16px;
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.card {
+  border: 1px solid var(--ink);
+  border-radius: 2px 3px 2px 4px;
+  padding: 24px;
+}
+
+.divider {
+  height: 0;
+  border-top: 1px dashed #b9b6aa;
+  margin: 24px 0;
+}
+
+.progress {
+  margin: 0;
+  color: var(--blue);
+  font-weight: 400;
+}
+
+.question {
+  font-size: 18px;
+  margin: 0 0 24px;
+}
+
+.answer-tabs {
+  display: none;
+}
+
+.tab {
+  font: inherit;
+  font-weight: 400;
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed #b9b6aa;
+  border-radius: 2px 3px 2px 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--highlight);
+}
+
+.tab.is-active {
+  color: var(--ink);
+  border-color: var(--ink);
+  border-style: solid;
+}
+
+.hint {
+  display: none;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.answers {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.answer {
+  flex: 1 1 0;
+  min-height: 168px;
+  padding: 16px;
+  border: 1px solid var(--ink);
+  border-radius: 3px 2px 4px 2px;
+}
+
+.answer-title {
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.answer-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.answer-text.typing::after {
+  content: "▍";
+  color: var(--blue);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.vote-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 400;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 2px 3px 2px 4px;
+  padding: 8px 20px;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--highlight);
+  text-decoration: underline;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.btn.ghost {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.score-row {
+  padding: 16px 0;
+  border-bottom: 1px dashed #b9b6aa;
+}
+
+.score-row:last-child {
+  border-bottom: 0;
+}
+
+.score-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.score-name {
+  font-weight: 600;
+}
+
+.score-rate {
+  color: var(--blue);
+}
+
+.score-bar {
+  display: block;
+  height: 16px;
+  margin: 12px 0 8px;
+  border: 1px solid var(--ink);
+  border-radius: 2px 3px 2px 4px;
+}
+
+.score-bar span {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  opacity: 0.25;
+}
+
+.score-detail {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.footnote {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 48px 16px 72px;
+  }
+
+  .answer-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .hint:not(.hidden) {
+    display: block;
+  }
+
+  /* one answer at a time, both render in the same slot so scroll position stays */
+  .answers[data-active="0"] .answer:nth-child(2),
+  .answers[data-active="1"] .answer:nth-child(1) {
+    display: none;
+  }
+
+  .answer-title {
+    display: none;
+  }
+
+  .answer {
+    min-height: 120px;
+  }
+}

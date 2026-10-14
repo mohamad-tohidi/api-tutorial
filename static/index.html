@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دفترچه‌ی مقایسه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="page">
+
+  <header class="masthead">
+    <h1>دفترچه‌ی مقایسه</h1>
+    <svg class="squiggle" viewBox="0 0 120 12" aria-hidden="true">
+      <path d="M2 8 C 14 2, 26 12, 38 6 S 62 1, 74 8 S 104 11, 118 4"/>
+    </svg>
+    <p class="subtitle">دو سامانه‌ی پاسخ‌گویی، بدون این‌که بدانی کدام است</p>
+  </header>
+
+  <section id="intro" class="card">
+    <h2>این‌جا چه خبر است؟</h2>
+    <p>
+      این یک دفترچه‌ی آزمایش است. یک سوال نشانت می‌دهیم و دو پاسخ از دو سامانه‌ی
+      مختلف. نمی‌گویی کدام پاسخ مال کدام سامانه است.
+    </p>
+    <p>
+      کافی است بگویی کدام پاسخ بهتر بود؛ اگر هر دو خوب بودند، همان را انتخاب کن.
+      در پایان نتیجه‌ی کلی هر دو سامانه را می‌بینی.
+    </p>
+    <div class="divider"></div>
+    <button id="start" class="btn">شروع می‌کنم</button>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <p id="progress" class="progress"></p>
+    <div class="divider"></div>
+
+    <p id="question" class="question"></p>
+
+    <div class="answer-tabs">
+      <button class="tab is-active" data-answer="0">پاسخ اول</button>
+      <button class="tab" data-answer="1">پاسخ دوم</button>
+    </div>
+    <p id="hint" class="hint hidden">برای فعال شدن رأی، هر دو پاسخ را ببین.</p>
+
+    <div class="answers" data-active="0">
+      <article class="answer">
+        <h3 class="answer-title">پاسخ اول</h3>
+        <p id="answer0" class="answer-text"></p>
+      </article>
+      <article class="answer">
+        <h3 class="answer-title">پاسخ دوم</h3>
+        <p id="answer1" class="answer-text"></p>
+      </article>
+    </div>
+
+    <div class="vote-row">
+      <button class="btn" data-choice="0" disabled>پاسخ اول بهتر بود</button>
+      <button class="btn" data-choice="1" disabled>پاسخ دوم بهتر بود</button>
+    </div>
+    <div class="vote-row">
+      <button class="btn ghost" data-choice="both" disabled>هر دو خوب بودند</button>
+      <button class="btn ghost" data-choice="neither" disabled>هیچ‌کدام</button>
+    </div>
+  </section>
+
+  <section id="results" class="hidden">
+    <h2>نتیجه</h2>
+    <p id="summary" class="subtitle"></p>
+    <div class="divider"></div>
+    <div id="score-rows"></div>
+    <div class="divider"></div>
+    <div class="vote-row">
+      <button id="snapshot" class="btn">ذخیره‌ی تصویر نتیجه</button>
+      <button id="restart" class="btn ghost">شروع دوباره</button>
+    </div>
+    <p class="footnote">تصویر ذخیره‌شده را برای من بفرست.</p>
+  </section>
+
+</main>
+<script src="app.js"></script>
+</body>
+</html>
