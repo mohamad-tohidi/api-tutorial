@@ -15,7 +15,7 @@ body {
   margin: 0;
   font-family: "Vazirmatn", sans-serif;
   font-size: 16px;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.9;
   color: var(--ink);
   background-color: var(--paper);
@@ -38,7 +38,7 @@ body {
 h1,
 h2,
 h3 {
-  font-weight: 400;
+  font-weight: 600;
 }
 
 h1 {
@@ -59,6 +59,7 @@ h3 {
 .subtitle {
   margin: 0;
   color: var(--muted);
+  font-weight: 500;
 }
 
 .squiggle {
@@ -87,11 +88,12 @@ h3 {
 .progress {
   margin: 0;
   color: var(--blue);
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .question {
   font-size: 18px;
+  font-weight: 600;
   margin: 0 0 24px;
 }
 
@@ -148,6 +150,7 @@ h3 {
 
 .answer-text {
   margin: 0;
+  font-weight: 500;
   white-space: pre-wrap;
 }
 
@@ -244,6 +247,38 @@ h3 {
   margin-top: 24px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.btn.ghost.voted,
+.btn.voted {
+  background: var(--highlight);
+  border-color: var(--ink);
+  border-style: solid;
+}
+
+.toast {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 24px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  padding: 10px 24px;
+  border: 1px solid var(--ink);
+  border-radius: 2px 3px 2px 4px;
+  background: var(--highlight);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 3px 3px 0 rgba(34, 34, 34, 0.18);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .hidden {

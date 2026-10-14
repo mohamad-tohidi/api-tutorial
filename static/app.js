@@ -11,9 +11,11 @@ const voteButtons = [...document.querySelectorAll("[data-choice]")];
 const startButton = document.getElementById("start");
 const restartButton = document.getElementById("restart");
 const snapshotButton = document.getElementById("snapshot");
+const toast = document.getElementById("toast");
 
 const STORAGE_KEY = "rag-arena-index";
-const TYPE_SPEED = 12;
+const TYPE_SPEED = 8;
+const TYPE_STEP = 4;
 
 let current = null;
 let total = 0;
@@ -48,7 +50,7 @@ function type(element, text) {
     element.classList.add("typing");
     let position = 0;
     const timer = setInterval(() => {
-      position += 1;
+      position += TYPE_STEP;
       element.textContent = text.slice(0, position);
       if (position >= text.length) {
         clearInterval(timer);
@@ -95,11 +97,22 @@ async function showQuestion(index) {
 async function recordVote(choice) {
   busy = true;
   updateVoting();
+
+  const button = voteButtons.find((item) => item.dataset.choice === choice);
+  button.classList.add("voted");
+  toast.textContent = "✓ رأی شما ثبت شد";
+  toast.classList.add("show");
+
   await fetch("/vote", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: current.id, choice: choice }),
   });
+
+  // let the confirmation register before moving on
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  toast.classList.remove("show");
+  button.classList.remove("voted");
 
   const next = current.index + 1;
   localStorage.setItem(STORAGE_KEY, String(next));
@@ -187,7 +200,7 @@ async function saveSnapshot() {
   ctx.fillText("دفترچه‌ی مقایسه", right, 72);
 
   ctx.fillStyle = "#3b5bdb";
-  ctx.font = "300 14px Vazirmatn, sans-serif";
+  ctx.font = "400 14px Vazirmatn, sans-serif";
   ctx.fillText(new Date().toLocaleDateString("fa-IR"), right, 100);
 
   ctx.strokeStyle = "#b9b6aa";
@@ -199,7 +212,7 @@ async function saveSnapshot() {
   ctx.setLineDash([]);
 
   ctx.fillStyle = "#222";
-  ctx.font = "300 15px Vazirmatn, sans-serif";
+  ctx.font = "400 15px Vazirmatn, sans-serif";
   ctx.fillText(`مجموع رأی‌ها: ${fa(lastResults.votes)} از ${fa(lastResults.rounds)} سوال`, right, 168);
 
   // scores
@@ -230,14 +243,14 @@ async function saveSnapshot() {
     ctx.globalAlpha = 1;
 
     ctx.fillStyle = "#5f5d55";
-    ctx.font = "300 14px Vazirmatn, sans-serif";
+    ctx.font = "400 14px Vazirmatn, sans-serif";
     ctx.fillText(`${fa(value.wins)} برد، ${fa(value.losses)} باخت، ${fa(value.ties)} مساوی`, right, y + 64);
 
     y += 120;
   }
 
   ctx.fillStyle = "#5f5d55";
-  ctx.font = "300 13px Vazirmatn, sans-serif";
+  ctx.font = "400 13px Vazirmatn, sans-serif";
   ctx.fillText("تصویر ذخیره‌شده را برای من بفرست.", right, height - 48);
 
   canvas.toBlob((blob) => {

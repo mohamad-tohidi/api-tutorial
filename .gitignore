@@ -3,3 +3,4 @@
 __pycache__
 arena.db
 questions.txt
+.DS_Store
