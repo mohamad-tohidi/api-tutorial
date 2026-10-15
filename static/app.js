@@ -27,6 +27,20 @@ let busy = false;
 const fa = (value) => value.toLocaleString("fa-IR");
 const isMobile = () => window.matchMedia("(max-width: 640px)").matches;
 
+let audioCtx = null;
+function blip() {
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = 660;
+  gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.13);
+}
+
 function show(section) {
   for (const element of [introSection, quizSection, resultsSection]) {
     element.classList.toggle("hidden", element !== section);
@@ -43,15 +57,15 @@ function updateVoting() {
   hint.classList.toggle("hidden", !isMobile() || viewed.size === 2);
 }
 
-// fake the generation: reveal the precomputed text character by character
+// fake the generation: reveal the precomputed markdown character by character
 function type(element, text) {
   return new Promise((resolve) => {
-    element.textContent = "";
+    element.innerHTML = "";
     element.classList.add("typing");
     let position = 0;
     const timer = setInterval(() => {
       position += TYPE_STEP;
-      element.textContent = text.slice(0, position);
+      element.innerHTML = marked.parse(text.slice(0, position));
       if (position >= text.length) {
         clearInterval(timer);
         element.classList.remove("typing");
@@ -74,7 +88,7 @@ async function showQuestion(index) {
   progress.textContent = `سوال ${fa(index + 1)} از ${fa(total)}`;
   questionText.textContent = current.question;
   for (const element of answerTexts) {
-    element.textContent = "";
+    element.innerHTML = "";
   }
   viewed = new Set([0]);
   typed = false;
@@ -96,6 +110,7 @@ async function showQuestion(index) {
 
 async function recordVote(choice) {
   busy = true;
+  blip();
   updateVoting();
 
   const button = voteButtons.find((item) => item.dataset.choice === choice);

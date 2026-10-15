@@ -150,8 +150,85 @@ h3 {
 
 .answer-text {
   margin: 0;
-  font-weight: 500;
-  white-space: pre-wrap;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.answer-text > :first-child {
+  margin-top: 0;
+}
+
+.answer-text > :last-child {
+  margin-bottom: 0;
+}
+
+.answer-text p,
+.answer-text ul,
+.answer-text ol,
+.answer-text blockquote {
+  margin: 0 0 12px;
+}
+
+.answer-text ul,
+.answer-text ol {
+  padding-inline-start: 22px;
+}
+
+.answer-text h1,
+.answer-text h2,
+.answer-text h3,
+.answer-text h4 {
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+
+.answer-text a {
+  color: var(--blue);
+}
+
+.answer-text code {
+  font-size: 13px;
+  background: var(--grid);
+  padding: 1px 5px;
+  border-radius: 3px;
+  direction: ltr;
+  display: inline-block;
+}
+
+.answer-text pre {
+  background: var(--grid);
+  padding: 10px 12px;
+  border-radius: 3px;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+}
+
+.answer-text pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.answer-text blockquote {
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--blue);
+  color: var(--muted);
+}
+
+.answer-text table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.answer-text th,
+.answer-text td {
+  border: 1px solid var(--ink);
+  padding: 4px 8px;
+  text-align: right;
 }
 
 .answer-text.typing::after {
@@ -169,6 +246,7 @@ h3 {
 .vote-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-top: 24px;
 }
@@ -312,5 +390,10 @@ h3 {
 
   .answer {
     min-height: 120px;
+  }
+
+  .vote-row .btn {
+    flex: 1 1 auto;
+    padding: 12px 16px;
   }
 }

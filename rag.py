@@ -7,7 +7,7 @@ import httpx
 
 PROJECT = "parsaqa"
 API_A = os.getenv("RAG_API_A_URL", "http://localhost:8000")
-API_B = os.getenv("RAG_API_B_URL", "http://localhost:8000")
+API_B = os.getenv("RAG_API_B_URL", "http://localhost:8001")
 TIMEOUT = httpx.Timeout(300, connect=10)
 
 

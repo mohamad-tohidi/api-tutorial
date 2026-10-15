@@ -41,25 +41,25 @@
     <p id="question" class="question"></p>
 
     <div class="answer-tabs">
-      <button class="tab is-active" data-answer="0">پاسخ اول</button>
-      <button class="tab" data-answer="1">پاسخ دوم</button>
+      <button class="tab is-active" data-answer="0">سمت راست</button>
+      <button class="tab" data-answer="1">سمت چپ</button>
     </div>
     <p id="hint" class="hint hidden">برای فعال شدن رأی، هر دو پاسخ را ببین.</p>
 
     <div class="answers" data-active="0">
       <article class="answer">
-        <h3 class="answer-title">پاسخ اول</h3>
-        <p id="answer0" class="answer-text"></p>
+        <h3 class="answer-title">سمت راست</h3>
+        <div id="answer0" class="answer-text"></div>
       </article>
       <article class="answer">
-        <h3 class="answer-title">پاسخ دوم</h3>
-        <p id="answer1" class="answer-text"></p>
+        <h3 class="answer-title">سمت چپ</h3>
+        <div id="answer1" class="answer-text"></div>
       </article>
     </div>
 
     <div class="vote-row">
-      <button class="btn" data-choice="0" disabled>پاسخ اول بهتر بود</button>
-      <button class="btn" data-choice="1" disabled>پاسخ دوم بهتر بود</button>
+      <button class="btn" data-choice="0" disabled>سمت راست بهتر بود</button>
+      <button class="btn" data-choice="1" disabled>سمت چپ بهتر بود</button>
     </div>
     <div class="vote-row">
       <button class="btn ghost" data-choice="both" disabled>هر دو خوب بودند</button>
@@ -82,6 +82,7 @@
 
 </main>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
