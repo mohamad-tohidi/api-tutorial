@@ -1,0 +1,28 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - name: Build single-file binary
+        run: |
+          uv run --with pyinstaller pyinstaller \
+            --onefile --clean --name rag-arena \
+            --add-data "static:static" \
+            --add-data "arena.db:." \
+            --collect-all uvicorn --collect-all fastapi \
+            app.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rag-arena-linux-x86_64
+          path: dist/rag-arena

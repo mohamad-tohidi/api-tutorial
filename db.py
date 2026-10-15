@@ -2,9 +2,31 @@
 
 import os
 import random
+import shutil
 import sqlite3
+import sys
+from pathlib import Path
 
-DB_FILE = os.getenv("DB_FILE", "arena.db")
+# when frozen by PyInstaller the bundled files live in _MEIPASS
+BUNDLE = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+
+
+def _db_path():
+    if path := os.getenv("DB_FILE"):
+        return Path(path)
+    # keep votes next to the binary so they survive restarts
+    if getattr(sys, "frozen", False):
+        beside = Path(sys.executable).resolve().parent
+        if os.access(beside, os.W_OK):
+            return beside / "arena.db"
+    return Path("arena.db")
+
+
+DB_FILE = _db_path()
+
+# first run: copy the embedded database out so it can be written to
+if not DB_FILE.exists() and (BUNDLE / "arena.db").exists():
+    shutil.copy(BUNDLE / "arena.db", DB_FILE)
 
 
 def connect():
@@ -27,23 +49,32 @@ def setup():
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             round_id INTEGER NOT NULL,
-            choice TEXT NOT NULL
+            choice TEXT NOT NULL,
+            voter TEXT NOT NULL DEFAULT ''
         );
     """)
 
     # old databases had one vote per round (round_id was the primary key)
     columns = [row["name"] for row in connection.execute("PRAGMA table_info(votes)")]
+    if "voter" not in columns and "id" in columns:
+        connection.execute("ALTER TABLE votes ADD COLUMN voter TEXT NOT NULL DEFAULT ''")
     if "id" not in columns:
         connection.executescript("""
             ALTER TABLE votes RENAME TO old_votes;
             CREATE TABLE votes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 round_id INTEGER NOT NULL,
-                choice TEXT NOT NULL
+                choice TEXT NOT NULL,
+                voter TEXT NOT NULL DEFAULT ''
             );
             INSERT INTO votes (round_id, choice) SELECT round_id, choice FROM old_votes;
             DROP TABLE old_votes;
         """)
+
+    # one vote per voter per round; anonymous votes (voter = '') are exempt
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS one_vote_per_voter ON votes(voter, round_id) WHERE voter != ''"
+    )
 
     connection.commit()
     connection.close()
@@ -82,16 +113,17 @@ def round_at(index):
     return row
 
 
-def save_vote(round_id, choice):
+def save_vote(round_id, choice, voter=""):
     connection = connect()
     exists = connection.execute("SELECT 1 FROM rounds WHERE id = ?", (round_id,)).fetchone()
     if not exists:
         connection.close()
         return False
 
+    # INSERT OR IGNORE: a repeat vote by the same voter is a silent no-op
     connection.execute(
-        "INSERT INTO votes (round_id, choice) VALUES (?, ?)",
-        (round_id, choice),
+        "INSERT OR IGNORE INTO votes (round_id, choice, voter) VALUES (?, ?, ?)",
+        (round_id, choice, voter),
     )
     connection.commit()
     connection.close()
@@ -138,6 +170,9 @@ def results():
         FROM votes
         JOIN rounds ON rounds.id = votes.round_id
     """).fetchall()
+    voters = connection.execute(
+        "SELECT COUNT(DISTINCT voter) FROM votes WHERE voter != ''"
+    ).fetchone()[0]
     total_rounds = precomputed_count()
     connection.close()
 
@@ -149,5 +184,6 @@ def results():
     return {
         "rounds": total_rounds,
         "votes": len(votes),
+        "voters": voters,
         "score": count_votes(votes),
     }
