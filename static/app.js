@@ -12,6 +12,7 @@ const startButton = document.getElementById("start");
 const restartButton = document.getElementById("restart");
 const snapshotButton = document.getElementById("snapshot");
 const toast = document.getElementById("toast");
+const shutdownButton = document.getElementById("shutdown");
 
 const STORAGE_KEY = "rag-arena-index";
 const TYPE_SPEED = 8;
@@ -303,24 +304,26 @@ restartButton.addEventListener("click", () => {
   location.reload();
 });
 
+shutdownButton.addEventListener("click", () => {
+  if (!confirm("برنامه بسته شود؟")) {
+    return;
+  }
+  // fire and forget: the server drops the connection as it exits
+  fetch("/shutdown", { method: "POST" }).catch(() => {});
+  document.body.innerHTML =
+    '<main class="page"><section class="card"><h2>برنامه بسته شد</h2><p>می‌توانی این تب را ببندی.</p></section></main>';
+});
+
 async function init() {
   const saved = Number(localStorage.getItem(STORAGE_KEY) || 0);
-  const response = await fetch(`/question?index=${saved}`);
 
-  if (response.ok) {
-    const data = await response.json();
-    total = data.total;
-    if (saved === 0) {
-      startButton.addEventListener("click", () => showQuestion(0));
-    } else {
-      startButton.textContent = `ادامه از سوال ${fa(saved + 1)}`;
-      startButton.addEventListener("click", () => showQuestion(saved));
-    }
-  } else if (saved > 0) {
-    await showResults();
-  } else {
-    startButton.addEventListener("click", () => showQuestion(0));
+  // resume where the last vote left off; 0 means "not started yet"
+  if (saved > 0) {
+    await showQuestion(saved);
+    return;
   }
+
+  startButton.addEventListener("click", () => showQuestion(0));
 }
 
 init();

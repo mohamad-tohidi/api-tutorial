@@ -8,7 +8,7 @@ GET  /results           scores for api_a and api_b
 from typing import Literal
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -61,8 +61,18 @@ async def results():
     return db.results()
 
 
+@app.post("/shutdown")
+async def shutdown(request: Request):
+    """Stop the server — only from the machine it runs on."""
+    if request.client and request.client.host not in ("127.0.0.1", "::1", "::ffff:127.0.0.1"):
+        raise HTTPException(403, "shutdown is local-only")
+    server.should_exit = True
+    return {"ok": True}
+
+
 app.mount("/", StaticFiles(directory=str(db.BUNDLE / "static"), html=True), name="static")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8002))
+    server.run()
